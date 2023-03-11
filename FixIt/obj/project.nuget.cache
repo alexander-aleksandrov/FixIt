@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "dgSpecHash": "+WXkeG5qYP7+0NOPtvnBUyZQ/p6Zbp1YovdRM300zute5QNGLMMtrmMy1lpcbzXhO240FgnXY/3eYXUTboNX+Q==",
+  "success": true,
+  "projectFilePath": "D:\\Projects\\FixIt\\FixIt\\FixIt.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Користувач\\.nuget\\packages\\inputsimulator\\1.0.4\\inputsimulator.1.0.4.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'InputSimulator 1.0.4' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net6.0-windows7.0'. This package may not be fully compatible with your project.",
+      "libraryId": "InputSimulator",
+      "targetGraphs": [
+        "net6.0-windows7.0"
+      ]
+    }
+  ]
+}
