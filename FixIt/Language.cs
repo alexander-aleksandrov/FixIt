@@ -82,12 +82,6 @@ namespace FixIt
     {'ю', '.'}
 };
 
-        public string CheckCurrentLanguage()
-        {
-            _inputLanguage = InputLanguage.CurrentInputLanguage;
-            return _inputLanguage.Culture.Name.ToString();
-        }
-
         public string Transcribe(string str)
         {
             byte[] format = GetFormat(str);
