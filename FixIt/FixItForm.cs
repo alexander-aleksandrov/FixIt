@@ -17,16 +17,14 @@ namespace FixIt
 
         private KeyboardLayoutDictionary _dictionary;
 
-        private StringBuilder _initialText = new StringBuilder();
-        private StringBuilder _transcribedText = new StringBuilder();
-        private InputSimulator simulator = new InputSimulator();
+        private StringBuilder _initialText = new();
+        private StringBuilder _transcribedText = new();
+        private InputSimulator simulator = new();
         private bool wasTranscribed = false;
 
         private CultureInfo _currentLanaguge;
 
-        private List<Keys> allowedKeys = new List<Keys>() {
-            Keys.A, Keys.B, Keys.C, Keys.D, Keys.E, Keys.F, Keys.G, Keys.H, Keys.I, Keys.J, Keys.K, Keys.L, Keys.M, Keys.N, Keys.O, Keys.P, Keys.Q, Keys.R, Keys.S, Keys.T, Keys.U, Keys.V, Keys.W, Keys.X, Keys.Y, Keys.Z, Keys.Space, Keys.OemSemicolon, Keys.OemCloseBrackets, Keys.OemOpenBrackets, Keys.Oemcomma, Keys.OemPeriod, Keys.OemQuestion, Keys.OemQuotes };
-        private List<Letter> _letters = new List<Letter>();
+        private List<Letter> _letters = new();
         public FixItForm()
         {
             InitializeComponent();
@@ -52,7 +50,7 @@ namespace FixIt
             {
                 Keys pressedKey = (Keys)Marshal.ReadInt32(lParam);
 
-                if (wasTranscribed && allowedKeys.Contains(pressedKey))
+                if (wasTranscribed && _dictionary.allowedKeys.Contains(pressedKey))
                 {
                     wasTranscribed = false;
                     _initialText.Clear();
@@ -62,11 +60,12 @@ namespace FixIt
 
                 CaseFlag caseflag = IsKeyDown(Keys.ShiftKey) || IsCapsLockOn() ? CaseFlag.UpperCase : CaseFlag.LowerCase;
 
-                if (allowedKeys.Contains(pressedKey))
+                if (_dictionary.allowedKeys.Contains(pressedKey))
                 {
                     char keyChar = _dictionary.GetChar(pressedKey, _currentLanaguge.Name, caseflag);
                     _letters.Add(new Letter(pressedKey, _currentLanaguge.Name, caseflag));
                     _initialText.Append(keyChar);
+                    label1.Text = _initialText.ToString();
                 }
 
 
@@ -131,7 +130,6 @@ namespace FixIt
                 _currentLanaguge = currentCulture;
             }
         }
-
 
         private static bool IsKeyDown(Keys key)
         {
