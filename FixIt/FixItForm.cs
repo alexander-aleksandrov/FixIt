@@ -15,16 +15,12 @@ namespace FixIt
         private IntPtr _hookID = IntPtr.Zero;
         private static DateTime _lastShiftPressTime = DateTime.MinValue;
 
-        private Language _language;
+        private KeyboardLayoutDictionary _dictionary;
 
         private StringBuilder _strBuilder = new StringBuilder();
         private int _keyPressedCounter = 0;
         private InputSimulator simulator = new InputSimulator();
         private bool wasTranscribed = false;
-        private Lang _keybLayout;
-        private readonly string ruKeyboard = "00000419";
-        private readonly string enKeyboard = "00000409";
-        private readonly string uaKeyboard = "00000422";
 
         private CultureInfo _currentLanaguge;
 
@@ -33,7 +29,7 @@ namespace FixIt
             InitializeComponent();
             _proc = HookCallback; // сохраняем делегат HookCallback в поле _proc
             _hookID = SetHook(_proc); // устанавливаем глобальный перехват клавиатуры
-            _language = new Language();
+            _dictionary = new KeyboardLayoutDictionary();
             Task.Factory.StartNew(() =>
             {
                 while (true)
@@ -51,26 +47,25 @@ namespace FixIt
 
             if (nCode >= 0 && wParam == (IntPtr)WM_KEYDOWN) // если нажата клавиша на клавиатуре
             {
-                Keys key = (Keys)Marshal.ReadInt32(lParam);
+                Keys pressedKey = (Keys)Marshal.ReadInt32(lParam);
 
-                bool shift = IsKeyDown(Keys.ShiftKey);
-                bool capsLock = IsCapsLockOn();
-
-                if (wasTranscribed && (key != Keys.RShiftKey || key != Keys.LShiftKey))
+                if (wasTranscribed && (pressedKey != Keys.RShiftKey || pressedKey != Keys.LShiftKey))
                 {
                     wasTranscribed = false;
                     _strBuilder.Clear();
                 }
 
-                if (char.IsLetterOrDigit((char)key) || key == Keys.Space)
+                CaseFlag caseflag = IsKeyDown(Keys.ShiftKey) || IsCapsLockOn() ? CaseFlag.UpperCase : CaseFlag.LowerCase;
+
+                if (char.IsLetterOrDigit((char)pressedKey) || pressedKey == Keys.Space)
                 {
-                    char keyChar = GetCharFromKey(key, shift, capsLock);
+                    char keyChar = GetCharFromKey(pressedKey, caseflag);
                     _strBuilder.Append(keyChar);
                     _keyPressedCounter++;
                 }
 
 
-                if (key == Keys.RShiftKey || key == Keys.LShiftKey)
+                if (pressedKey == Keys.RShiftKey || pressedKey == Keys.LShiftKey)
                 {
                     DateTime now = DateTime.Now;
                     TimeSpan interval = now - _lastShiftPressTime;
@@ -78,7 +73,7 @@ namespace FixIt
                     if (interval.TotalMilliseconds < 500 && _strBuilder.Length != 0)
                     {
                         string toTranscribe = _strBuilder.ToString();
-                        string transcribedText = _language.Transcribe(toTranscribe);
+                        string transcribedText = _dictionary.Transcribe(toTranscribe);
 
                         //Удаление старой и вывод новой строки
                         for (int i = 0; i < transcribedText.Length; i++)
@@ -125,19 +120,7 @@ namespace FixIt
             }
         }
 
-        private static bool IsKeyDown(Keys key)
-        {
-            short state = GetKeyState((int)key);
-            return (state & 0x8000) != 0;
-        }
-
-        private static bool IsCapsLockOn()
-        {
-            return (Control.IsKeyLocked(Keys.CapsLock));
-        }
-
-
-        private char GetCharFromKey(Keys key, bool shift, bool capsLock)
+        private char GetCharFromKey(Keys key, CaseFlag caseFlag)
         {
 
             char ch;
@@ -149,13 +132,14 @@ namespace FixIt
             if (key >= Keys.A && key <= Keys.Z)
             {
                 ch = (char)((int)'a' + (int)(key - Keys.A));
-                if (shift ^ capsLock)
+
+                if (caseFlag == CaseFlag.UpperCase)
                 {
                     ch = char.ToUpper(ch);
                 }
                 if (_currentLanaguge.Name == "ru-RU")
                 {
-                    res = _language.Transcribe(ch.ToString());
+                    res = _dictionary.Transcribe(ch.ToString());
                     return res[0];
                 }
                 else
@@ -167,13 +151,17 @@ namespace FixIt
             }
             return charToAdd.ToCharArray()[0];
         }
-
-        public static bool IsInputActive()
+        private static bool IsKeyDown(Keys key)
         {
-            IntPtr activeWindow = GetForegroundWindow();
-            IntPtr activeInput = GetFocus();
-            return (activeWindow == activeInput);
+            short state = GetKeyState((int)key);
+            return (state & 0x8000) != 0;
         }
+
+        private static bool IsCapsLockOn()
+        {
+            return (Control.IsKeyLocked(Keys.CapsLock));
+        }
+
         private void FixItForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             UnhookWindowsHookEx(_hookID); // отключаем глобальный перехват клавиатуры
