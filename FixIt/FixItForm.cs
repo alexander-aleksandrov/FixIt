@@ -23,6 +23,7 @@ namespace FixIt
         private bool wasTranscribed = false;
 
         private CultureInfo _currentLanaguge;
+        private KeyboardLayout _keybLayout = new();
 
         private List<Letter> _letters = new();
         public FixItForm()
@@ -89,6 +90,10 @@ namespace FixIt
                         }
                         simulator.Keyboard.TextEntry(_transcribedText.ToString());
 
+                        //change keyboard language 
+                        KeyboardLayout.Next(_currentLanaguge.Name);
+
+
                         label1.Text = _transcribedText.ToString();
 
                         //cikling through variants 
@@ -111,7 +116,6 @@ namespace FixIt
                     }
                 }
             }
-
 
             return CallNextHookEx(_hookID, nCode, wParam, lParam); // передаем управление следующему перехватчику
         }
