@@ -17,13 +17,16 @@ namespace FixIt
 
         private KeyboardLayoutDictionary _dictionary;
 
-        private StringBuilder _strBuilder = new StringBuilder();
-        private int _keyPressedCounter = 0;
+        private StringBuilder _initialText = new StringBuilder();
+        private StringBuilder _transcribedText = new StringBuilder();
         private InputSimulator simulator = new InputSimulator();
         private bool wasTranscribed = false;
 
         private CultureInfo _currentLanaguge;
 
+        private List<Keys> allowedKeys = new List<Keys>() {
+            Keys.A, Keys.B, Keys.C, Keys.D, Keys.E, Keys.F, Keys.G, Keys.H, Keys.I, Keys.J, Keys.K, Keys.L, Keys.M, Keys.N, Keys.O, Keys.P, Keys.Q, Keys.R, Keys.S, Keys.T, Keys.U, Keys.V, Keys.W, Keys.X, Keys.Y, Keys.Z, Keys.Space, Keys.OemSemicolon, Keys.OemCloseBrackets, Keys.OemOpenBrackets, Keys.Oemcomma, Keys.OemPeriod, Keys.OemQuestion, Keys.OemQuotes };
+        private List<Letter> _letters = new List<Letter>();
         public FixItForm()
         {
             InitializeComponent();
@@ -49,19 +52,21 @@ namespace FixIt
             {
                 Keys pressedKey = (Keys)Marshal.ReadInt32(lParam);
 
-                if (wasTranscribed && (pressedKey != Keys.RShiftKey || pressedKey != Keys.LShiftKey))
+                if (wasTranscribed && allowedKeys.Contains(pressedKey))
                 {
                     wasTranscribed = false;
-                    _strBuilder.Clear();
+                    _initialText.Clear();
+                    _transcribedText.Clear();
+                    _letters.Clear();
                 }
 
                 CaseFlag caseflag = IsKeyDown(Keys.ShiftKey) || IsCapsLockOn() ? CaseFlag.UpperCase : CaseFlag.LowerCase;
 
-                if (char.IsLetterOrDigit((char)pressedKey) || pressedKey == Keys.Space)
+                if (allowedKeys.Contains(pressedKey))
                 {
-                    char keyChar = GetCharFromKey(pressedKey, caseflag);
-                    _strBuilder.Append(keyChar);
-                    _keyPressedCounter++;
+                    char keyChar = _dictionary.GetChar(pressedKey, _currentLanaguge.Name, caseflag);
+                    _letters.Add(new Letter(pressedKey, _currentLanaguge.Name, caseflag));
+                    _initialText.Append(keyChar);
                 }
 
 
@@ -70,26 +75,35 @@ namespace FixIt
                     DateTime now = DateTime.Now;
                     TimeSpan interval = now - _lastShiftPressTime;
 
-                    if (interval.TotalMilliseconds < 500 && _strBuilder.Length != 0)
+                    if (interval.TotalMilliseconds < 500 && _letters.Count != 0)
                     {
-                        string toTranscribe = _strBuilder.ToString();
-                        string transcribedText = _dictionary.Transcribe(toTranscribe);
+                        //мигалка между начальным текстом и переведенным 
+                        if (!wasTranscribed)
+                        {
+                            _transcribedText.Append(_dictionary.Transcribe(_letters));
+                        }
 
                         //Удаление старой и вывод новой строки
-                        for (int i = 0; i < transcribedText.Length; i++)
+                        for (int i = 0; i < _transcribedText.Length; i++)
                         {
                             simulator.Keyboard.KeyPress(VirtualKeyCode.BACK);
                         }
-                        simulator.Keyboard.TextEntry(transcribedText);
+                        simulator.Keyboard.TextEntry(_transcribedText.ToString());
 
-                        //Зацикливание транскрибции
-                        _strBuilder.Clear();
-                        _strBuilder.Append(transcribedText);
+                        label1.Text = _transcribedText.ToString();
+
+                        //cikling through variants 
+                        string temp = _transcribedText.ToString();
+                        _transcribedText.Clear();
+                        _transcribedText.Append(_initialText.ToString());
+                        _initialText.Clear();
+                        _initialText.Append(temp);
 
                         _lastShiftPressTime = DateTime.MinValue;
 
                         // Флаг о выполнении транскрибции
                         wasTranscribed = true;
+
                         return (IntPtr)1; // Отменяем нажатие Shift, чтобы не обрабатывалось дальше
                     }
                     else
@@ -97,8 +111,6 @@ namespace FixIt
                         _lastShiftPressTime = now; // Сохраняем время нажатия Shift
                     }
                 }
-
-                label1.Text = _strBuilder.ToString();
             }
 
 
@@ -120,37 +132,7 @@ namespace FixIt
             }
         }
 
-        private char GetCharFromKey(Keys key, CaseFlag caseFlag)
-        {
 
-            char ch;
-            string res = String.Empty;
-
-            char keyChar = (char)key;
-            string charToAdd = (Char.IsLetterOrDigit(keyChar) || key == Keys.Space) ? keyChar.ToString() : string.Empty;
-            charToAdd = (key == Keys.Space) ? " " : charToAdd;
-            if (key >= Keys.A && key <= Keys.Z)
-            {
-                ch = (char)((int)'a' + (int)(key - Keys.A));
-
-                if (caseFlag == CaseFlag.UpperCase)
-                {
-                    ch = char.ToUpper(ch);
-                }
-                if (_currentLanaguge.Name == "ru-RU")
-                {
-                    res = _dictionary.Transcribe(ch.ToString());
-                    return res[0];
-                }
-                else
-                {
-                    return ch;
-                }
-
-
-            }
-            return charToAdd.ToCharArray()[0];
-        }
         private static bool IsKeyDown(Keys key)
         {
             short state = GetKeyState((int)key);
