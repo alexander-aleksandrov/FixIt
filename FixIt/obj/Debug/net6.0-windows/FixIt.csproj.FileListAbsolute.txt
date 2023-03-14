@@ -17,3 +17,5 @@ D:\Projects\FixIt\FixIt\obj\Debug\net6.0-windows\ref\FixIt.dll
 D:\Projects\FixIt\FixIt\obj\Debug\net6.0-windows\FixIt.FixItForm.resources
 D:\Projects\FixIt\FixIt\bin\Debug\net6.0-windows\WindowsInput.dll
 D:\Projects\FixIt\FixIt\obj\Debug\net6.0-windows\FixIt.csproj.CopyComplete
+D:\Projects\FixIt\FixIt\obj\Debug\net6.0-windows\Interop.UIAutomationClient.dll
+D:\Projects\FixIt\FixIt\obj\Debug\net6.0-windows\FixIt.csproj.ResolveComReference.cache
